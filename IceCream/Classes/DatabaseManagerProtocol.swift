@@ -91,6 +91,11 @@ extension DatabaseManager {
     public func syncRecordsToCloudKit(recordsToStore: [CKRecord], recordIDsToDelete: [CKRecord.ID], completion: ((Error?) -> ())? = nil) {
         let modifyOpe = CKModifyRecordsOperation(recordsToSave: recordsToStore, recordIDsToDelete: recordIDsToDelete)
         
+        print("[LXH] =======> 上传数据到CloudKit =========>")
+        for store in recordsToStore {
+            print("[LXH] =======> name = \(store["nickName"]) onlineDate = \(store["onLineDate"])")
+        }
+        
         if #available(iOS 11.0, OSX 10.13, tvOS 11.0, watchOS 4.0, *) {
             let config = CKOperation.Configuration()
             config.isLongLived = true
