@@ -40,7 +40,7 @@ final class PublicDatabaseManager: DatabaseManager {
     }
     
     func createDatabaseSubscriptionIfHaveNot() {
-//        syncObjects.forEach { createSubscriptionInPublicDatabase(on: $0) }
+        syncObjects.forEach { createSubscriptionInPublicDatabase(on: $0) }
     }
     
     func startObservingTermination() {
