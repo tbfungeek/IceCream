@@ -57,6 +57,8 @@ public final class SyncEngine {
                 self.databaseManager.createDatabaseSubscriptionIfHaveNot()
             case .couldNotDetermine:
                 break
+            case .temporarilyUnavailable:
+                break
             @unknown default:
                 break
             }
@@ -85,6 +87,7 @@ extension SyncEngine {
 
 public enum Notifications: String, NotificationName {
     case cloudKitDataDidChangeRemotely
+    case didReceiveRemoteChange
 }
 
 public enum IceCreamKey: String {

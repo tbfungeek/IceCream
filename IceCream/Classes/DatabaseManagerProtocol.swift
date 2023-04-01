@@ -7,7 +7,7 @@
 
 import CloudKit
 
-protocol DatabaseManager: class {
+protocol DatabaseManager: AnyObject {
     
     /// A conduit for accessing and performing operations on the data of an app container.
     var database: CKDatabase { get }
@@ -81,7 +81,10 @@ extension DatabaseManager {
         NotificationCenter.default.addObserver(forName: Notifications.cloudKitDataDidChangeRemotely.name, object: nil, queue: nil, using: { [weak self](_) in
             guard let self = self else { return }
             DispatchQueue.global(qos: .utility).async {
-                self.fetchChangesInDatabase(nil)
+                self.fetchChangesInDatabase { error in
+                    guard error == nil else { return }
+                    NotificationCenter.default.post(name: Notifications.didReceiveRemoteChange.name, object: nil)
+                }
             }
         })
     }
