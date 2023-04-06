@@ -81,8 +81,8 @@ extension SyncObject: Syncable {
     }
     
     public func add(record: CKRecord) {
-        print("[LXH] =======> 将云端数据更新存储到本地 =========>")
-        print("[LXH] =======> name=\(record["nickName"]) onlineDate=\(record["onLineDate"])=========>")
+        print("[Fetch_Online_Tag] =======> 远程数据库数据发生变更，将云端数据更新存储到本地 =========>")
+        print("[Fetch_Online_Tag] =======> name=\(record["nickName"]) onlineDate=\(record["onLineDate"])=========>")
         BackgroundWorker.shared.start {
             let realm = try! Realm(configuration: self.realmConfiguration)
             guard let object = T.parseFromRecord(
@@ -145,10 +145,11 @@ extension SyncObject: Syncable {
                     let recordIDsToDelete = modifications.filter { $0 < collection.count }.map { collection[$0] }.filter { $0.isDeleted }.map { $0.recordID }
                     
                     guard recordsToStore.count > 0 || recordIDsToDelete.count > 0 else { return }
-                    print("[LXH] =======> 数据库变更 =========>")
+                    print("[Fetch_Online_Tag] =======> 本地数据库数据变更 =========>")
                     for store in recordsToStore {
-                        print("[LXH] =======> name = \(store["nickName"]) onlineDate = \(store["onLineDate"])")
+                        print("[Fetch_Online_Tag] =======> name = \(store["nickName"]) onlineDate = \(store["onLineDate"])")
                     }
+                    print("[Fetch_Online_Tag] ==================================>")
                     self.pipeToEngine?(recordsToStore, recordIDsToDelete)
                 case .error(_):
                     break
