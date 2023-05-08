@@ -11,6 +11,7 @@ import RealmSwift
 
 public protocol CKRecordConvertible {
     static var recordType: String { get }
+    static var recordIDPrefix: String { get}
     static var zoneID: CKRecordZone.ID { get }
     static var databaseScope: CKDatabase.Scope { get }
     
@@ -28,6 +29,10 @@ extension CKRecordConvertible where Self: Object {
     
     public static var recordType: String {
         return className()
+    }
+    
+    public static var recordIDPrefix: String {
+        return ""
     }
     
     public static var zoneID: CKRecordZone.ID {
@@ -59,13 +64,13 @@ extension CKRecordConvertible where Self: Object {
                 assert(primaryValueString.allSatisfy({ $0.isASCII }), "Primary value for CKRecord name must contain only ASCII characters")
                 assert(primaryValueString.count <= 255, "Primary value for CKRecord name must not exceed 255 characters")
                 assert(!primaryValueString.starts(with: "_"), "Primary value for CKRecord name must not start with an underscore")
-                return CKRecord.ID(recordName: primaryValueString, zoneID: Self.zoneID)
+                return CKRecord.ID(recordName: Self.recordIDPrefix + primaryValueString, zoneID: Self.zoneID)
             } else {
                 assertionFailure("\(primaryKeyProperty.name)'s value should be String type")
             }
         case .int:
             if let primaryValueInt = self[primaryKeyProperty.name] as? Int {
-                return CKRecord.ID(recordName: "\(primaryValueInt)", zoneID: Self.zoneID)
+                return CKRecord.ID(recordName: Self.recordIDPrefix + "\(primaryValueInt)", zoneID: Self.zoneID)
             } else {
                 assertionFailure("\(primaryKeyProperty.name)'s value should be Int type")
             }
