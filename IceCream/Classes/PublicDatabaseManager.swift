@@ -31,7 +31,10 @@ final class PublicDatabaseManager: DatabaseManager {
             let predicate = NSPredicate(value: true)
             let query = CKQuery(recordType: syncObject.recordType, predicate: predicate)
             let queryOperation = CKQueryOperation(query: query)
-            self?.excuteQueryOperation(queryOperation: queryOperation, on: syncObject, callback: callback)
+            self?.excuteQueryOperation(queryOperation: queryOperation, on: syncObject, callback: {
+                syncObject.resolvePendingRelationships()
+                callback?($0)
+            })
         }
     }
     
@@ -66,6 +69,7 @@ final class PublicDatabaseManager: DatabaseManager {
     // MARK: - Private Methods
     private func excuteQueryOperation(queryOperation: CKQueryOperation,on syncObject: Syncable, callback: ((Error?) -> Void)? = nil) {
         queryOperation.recordFetchedBlock = { record in
+            print("[XXXXXXXX] recordType \(record.recordType)")
             syncObject.add(record: record)
         }
         
