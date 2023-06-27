@@ -45,6 +45,7 @@ extension DatabaseManager {
     
     func prepare() {
         syncObjects.forEach {
+            /// 注册将本地数据同步到CloudKit的数据通道
             $0.pipeToEngine = { [weak self] recordsToStore, recordIDsToDelete in
                 guard let self = self else { return }
                 self.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordIDsToDelete)
@@ -81,6 +82,7 @@ extension DatabaseManager {
         NotificationCenter.default.addObserver(forName: Notifications.cloudKitDataDidChangeRemotely.name, object: nil, queue: nil, using: { [weak self](_) in
             guard let self = self else { return }
             DispatchQueue.global(qos: .utility).async {
+                SyncEnginLogHandler.log(tag: .RemoteChange, msg: "=============================== 收到远程数据变更通知 =======================")
                 self.fetchChangesInDatabase { error in
                     guard error == nil else { return }
                     NotificationCenter.default.post(name: Notifications.didReceiveRemoteChange.name, object: nil)
@@ -92,12 +94,24 @@ extension DatabaseManager {
     /// Sync local data to CloudKit
     /// For more about the savePolicy: https://developer.apple.com/documentation/cloudkit/ckrecordsavepolicy
     public func syncRecordsToCloudKit(recordsToStore: [CKRecord], recordIDsToDelete: [CKRecord.ID], completion: ((Error?) -> ())? = nil) {
+        
+        SyncEnginLogHandler.log(tag: .PushTags, msg: "=============================== 将数据同步到CloudKit =============================== ")
+        
         let modifyOpe = CKModifyRecordsOperation(recordsToSave: recordsToStore, recordIDsToDelete: recordIDsToDelete)
         
-        print("[LXH] =======> 上传数据到CloudKit =========>")
+        SyncEnginLogHandler.log(tag: .PushTags, msg: "=============== recordsToStore 要存储到云端的数据 [Begin] ====================")
         for store in recordsToStore {
-            print("[LXH] =======> name = \(store["nickName"]) onlineDate = \(store["onLineDate"])")
+            SyncEnginLogHandler.log(tag: .PushTags, msg: " recordType = \(store.recordType) store = \(store)")
         }
+        SyncEnginLogHandler.log(tag: .PushTags, msg: "=============== recordsToStore 要存储到云端的数据 [End] ====================")
+        
+        
+        SyncEnginLogHandler.log(tag: .PushTags, msg: "=============== recordIDsToDelete 要从云端删除的数据 [Begin] ====================")
+        for delete in recordIDsToDelete {
+            SyncEnginLogHandler.log(tag: .PushTags, msg: " delete = \(delete.recordName)")
+        }
+        SyncEnginLogHandler.log(tag: .PushTags, msg: "=============== recordIDsToDelete 要从云端删除的数据 [End] ====================")
+        
         
         if #available(iOS 11.0, OSX 10.13, tvOS 11.0, watchOS 4.0, *) {
             let config = CKOperation.Configuration()
@@ -122,17 +136,20 @@ extension DatabaseManager {
             (_, _, error) in
             
             guard let self = self else { return }
-            
+            SyncEnginLogHandler.log(tag: .PushTags, msg: "modifyRecordsCompletionBlock error \(String(describing: error))")
             switch ErrorHandler.shared.resultType(with: error) {
             case .success:
+                SyncEnginLogHandler.log(tag: .PushTags, msg: "modifyRecordsCompletionBlock success")
                 DispatchQueue.main.async {
                     completion?(nil)
                 }
             case .retry(let timeToWait, _):
+                SyncEnginLogHandler.log(tag: .PushTags, msg: "modifyRecordsCompletionBlock retry timeToWait = \(timeToWait)")
                 ErrorHandler.shared.retryOperationIfPossible(retryAfter: timeToWait) {
                     self.syncRecordsToCloudKit(recordsToStore: recordsToStore, recordIDsToDelete: recordIDsToDelete, completion: completion)
                 }
             case .chunk:
+                SyncEnginLogHandler.log(tag: .PushTags, msg: "modifyRecordsCompletionBlock chunk")
                 /// CloudKit says maximum number of items in a single request is 400.
                 /// So I think 300 should be fine by them.
                 let chunkedRecords = recordsToStore.chunkItUp(by: 300)

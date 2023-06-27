@@ -81,8 +81,11 @@ extension SyncObject: Syncable {
     }
     
     public func add(record: CKRecord) {
-        print("[Fetch_Online_Tag] =======> 远程数据库数据发生变更，将云端数据更新存储到本地 =========>")
-        print("[Fetch_Online_Tag] =======> name=\(record["nickName"]) onlineDate=\(record["onLineDate"])=========>")
+        
+        SyncEnginLogHandler.log(tag: .FetchTags, msg: "=======> 远程数据库数据发生变更，将云端数据更新存储到本地 =========>")
+        
+        SyncEnginLogHandler.log(tag: .FetchTags, msg: "recordName = \(record.recordType) record = \(record)")
+        
         BackgroundWorker.shared.start {
             let realm = try! Realm(configuration: self.realmConfiguration)
             guard let object = T.parseFromRecord(
@@ -136,23 +139,22 @@ extension SyncObject: Syncable {
     public func registerLocalDatabase() {
         BackgroundWorker.shared.start {
             let realm = try! Realm(configuration: self.realmConfiguration)
+            SyncEnginLogHandler.log(tag: .PushTags, msg: "registerLocalDatabase realm = \(realm)")
             self.notificationToken = realm.objects(T.self).observe({ [weak self](changes) in
                 guard let self = self else { return }
                 switch changes {
                 case .initial(_):
+                    SyncEnginLogHandler.log(tag: .PushTags, msg: "registerLocalDatabase changes = initial")
                     break
                 case .update(let collection, _, let insertions, let modifications):
                     let recordsToStore = (insertions + modifications).filter { $0 < collection.count }.map { collection[$0] }.filter{ !$0.isDeleted }.map { $0.record }
                     let recordIDsToDelete = modifications.filter { $0 < collection.count }.map { collection[$0] }.filter { $0.isDeleted }.map { $0.recordID }
                     
                     guard recordsToStore.count > 0 || recordIDsToDelete.count > 0 else { return }
-                    print("[Fetch_Online_Tag] =======> 本地数据库数据变更 =========>")
-                    for store in recordsToStore {
-                        print("[Fetch_Online_Tag] =======> name = \(store["nickName"]) onlineDate = \(store["onLineDate"])")
-                    }
-                    print("[Fetch_Online_Tag] ==================================>")
+                    SyncEnginLogHandler.log(tag: .PushTags, msg: "update =======> 本地数据库数据变更 =========>")
                     self.pipeToEngine?(recordsToStore, recordIDsToDelete)
-                case .error(_):
+                case .error(let error):
+                    SyncEnginLogHandler.log(tag: .PushTags, msg: "error =======> registerLocalDatabase =========>\(error)")
                     break
                 }
             })

@@ -27,6 +27,7 @@ final class PublicDatabaseManager: DatabaseManager {
     }
     
     func fetchChangesInDatabase(_ callback: ((Error?) -> Void)?) {
+        SyncEnginLogHandler.log(tag: .FetchTags, msg: "[fetchChangesInDatabase] 准备拉取iCloud数据到本地")
         syncObjects.forEach { [weak self] syncObject in
             let predicate = NSPredicate(value: true)
             let query = CKQuery(recordType: syncObject.recordType, predicate: predicate)
@@ -68,13 +69,17 @@ final class PublicDatabaseManager: DatabaseManager {
     
     // MARK: - Private Methods
     private func excuteQueryOperation(queryOperation: CKQueryOperation,on syncObject: Syncable, callback: ((Error?) -> Void)? = nil) {
+        
+        SyncEnginLogHandler.log(tag: .FetchTags, msg: "[excuteQueryOperation] syncObject = \(syncObject.recordType)")
+        
         queryOperation.recordFetchedBlock = { record in
-            print("[XXXXXXXX] recordType \(record.recordType)")
+            SyncEnginLogHandler.log(tag: .FetchTags, msg: "[excuteQueryOperation] recordFetchedBlock = recordType = \(record.recordType)")
             syncObject.add(record: record)
         }
         
         queryOperation.queryCompletionBlock = { [weak self] cursor, error in
             guard let self = self else { return }
+            SyncEnginLogHandler.log(tag: .FetchTags, msg: "[excuteQueryOperation] queryCompletionBlock = error = \(String(describing: error))")
             if let cursor = cursor {
                 let subsequentQueryOperation = CKQueryOperation(cursor: cursor)
                 self.excuteQueryOperation(queryOperation: subsequentQueryOperation, on: syncObject, callback: callback)
@@ -82,10 +87,12 @@ final class PublicDatabaseManager: DatabaseManager {
             }
             switch ErrorHandler.shared.resultType(with: error) {
             case .success:
+                SyncEnginLogHandler.log(tag: .FetchTags, msg: "[excuteQueryOperation] success")
                 DispatchQueue.main.async {
                     callback?(nil)
                 }
             case .retry(let timeToWait, _):
+                SyncEnginLogHandler.log(tag: .FetchTags, msg: "[excuteQueryOperation] retry timeToWait = \(timeToWait)")
                 ErrorHandler.shared.retryOperationIfPossible(retryAfter: timeToWait, block: {
                     self.excuteQueryOperation(queryOperation: queryOperation, on: syncObject, callback: callback)
                 })
@@ -109,7 +116,7 @@ final class PublicDatabaseManager: DatabaseManager {
 
        let createOp = CKModifySubscriptionsOperation(subscriptionsToSave: [subscription], subscriptionIDsToDelete: [])
        createOp.modifySubscriptionsCompletionBlock = { _, _, _ in
-
+           SyncEnginLogHandler.log(tag: .RemoteChange, msg: "====================== createSubscriptionInPublicDatabase modifySubscriptionsCompletionBlock ====================")
        }
        createOp.qualityOfService = .utility
        database.add(createOp)

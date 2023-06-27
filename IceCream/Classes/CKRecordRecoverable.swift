@@ -74,25 +74,33 @@ extension CKRecordRecoverable where Self: Object {
                            let schema = realm.schema.objectSchema.first(where: { $0.className == objectClassName }),
                            let primaryKeyValue = primaryKeyForRecordID(recordID: reference.recordID, schema: schema) as? AnyHashable {
                             if schema.className == U.className() {
+                                SyncEnginLogHandler.log(tag: .FetchTags, msg:"schema.className = \(schema.className)")
                                 if let existObject = realm.object(ofType: U.self, forPrimaryKey: primaryKeyValue) {
+                                    SyncEnginLogHandler.log(tag: .FetchTags, msg:"uList.append(existObject)")
                                     uList.append(existObject)
                                 } else {
+                                    SyncEnginLogHandler.log(tag: .FetchTags, msg:"pendingUTypeRelationshipsWorker.addToPendingList")
                                     pendingUTypeRelationshipsWorker.addToPendingList(elementPrimaryKeyValue: primaryKeyValue, propertyName: prop.name, owner: o)
                                 }
                             }
                             
                             if schema.className == V.className() {
+                                SyncEnginLogHandler.log(tag: .FetchTags, msg:"schema.className = \(schema.className)")
                                 if let existObject = realm.object(ofType: V.self, forPrimaryKey: primaryKeyValue) {
+                                    SyncEnginLogHandler.log(tag: .FetchTags, msg:"vList.append(existObject)")
                                     vList.append(existObject)
                                 } else {
+                                    SyncEnginLogHandler.log(tag: .FetchTags, msg:"pendingVTypeRelationshipsWorker.addToPendingList")
                                     pendingVTypeRelationshipsWorker.addToPendingList(elementPrimaryKeyValue: primaryKeyValue, propertyName: prop.name, owner: o)
                                 }
                             }
                             
                             if schema.className == W.className() {
                                 if let existObject = realm.object(ofType: W.self, forPrimaryKey: primaryKeyValue) {
+                                    SyncEnginLogHandler.log(tag: .FetchTags, msg:"wList.append(existObject)")
                                     wList.append(existObject)
                                 } else {
+                                    SyncEnginLogHandler.log(tag: .FetchTags, msg:"pendingWTypeRelationshipsWorker.addToPendingList")
                                     pendingWTypeRelationshipsWorker.addToPendingList(elementPrimaryKeyValue: primaryKeyValue, propertyName: prop.name, owner: o)
                                 }
                             }
