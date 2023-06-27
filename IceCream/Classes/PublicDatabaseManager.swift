@@ -79,7 +79,7 @@ final class PublicDatabaseManager: DatabaseManager {
         
         queryOperation.queryCompletionBlock = { [weak self] cursor, error in
             guard let self = self else { return }
-            SyncEnginLogHandler.log(tag: .FetchTags, msg: "[excuteQueryOperation] queryCompletionBlock = error = \(String(describing: error))")
+            SyncEnginLogHandler.log(tag: .FetchTags, msg: "[excuteQueryOperation] queryCompletionBlock = recordType = \(syncObject.recordType) error = \(String(describing: error))")
             if let cursor = cursor {
                 let subsequentQueryOperation = CKQueryOperation(cursor: cursor)
                 self.excuteQueryOperation(queryOperation: subsequentQueryOperation, on: syncObject, callback: callback)
