@@ -45,6 +45,7 @@ extension DatabaseManager {
     
     func prepare() {
         syncObjects.forEach {
+            SyncEnginLogHandler.log(tag: .SyncEngine , msg: "syncObject = recordType = \($0.recordType) zoneName =\($0.zoneID.zoneName) ownerName = \($0.zoneID.ownerName)")
             /// 注册将本地数据同步到CloudKit的数据通道
             $0.pipeToEngine = { [weak self] recordsToStore, recordIDsToDelete in
                 guard let self = self else { return }
@@ -95,7 +96,7 @@ extension DatabaseManager {
     /// For more about the savePolicy: https://developer.apple.com/documentation/cloudkit/ckrecordsavepolicy
     public func syncRecordsToCloudKit(recordsToStore: [CKRecord], recordIDsToDelete: [CKRecord.ID], completion: ((Error?) -> ())? = nil) {
         
-        SyncEnginLogHandler.log(tag: .PushTags, msg: "=============================== 将数据同步到CloudKit =============================== ")
+        SyncEnginLogHandler.log(tag: .PushTags, msg: "=============================== 将数据上传到CloudKit =============================== ")
         
         let modifyOpe = CKModifyRecordsOperation(recordsToSave: recordsToStore, recordIDsToDelete: recordIDsToDelete)
         

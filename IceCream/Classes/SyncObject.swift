@@ -107,6 +107,7 @@ extension SyncObject: Syncable {
             /// https://realm.io/docs/swift/latest/#objects-with-primary-keys
             self.resolvePendingRelationships()
             realm.beginWrite()
+            SyncEnginLogHandler.log(tag: .FetchTags, msg: "将解析后的对象写入到数据库 \(object)")
             realm.add(object, update: .modified)
             if let token = self.notificationToken {
                 try! realm.commitWrite(withoutNotifying: [token])
@@ -151,7 +152,7 @@ extension SyncObject: Syncable {
                     let recordIDsToDelete = modifications.filter { $0 < collection.count }.map { collection[$0] }.filter { $0.isDeleted }.map { $0.recordID }
                     
                     guard recordsToStore.count > 0 || recordIDsToDelete.count > 0 else { return }
-                    SyncEnginLogHandler.log(tag: .PushTags, msg: "update =======> 本地数据库数据变更 =========>")
+                    SyncEnginLogHandler.log(tag: .PushTags, msg: "update =======> 本地数据库数据变更，即将准备将数据库的数据上传到iCloud =========>")
                     self.pipeToEngine?(recordsToStore, recordIDsToDelete)
                 case .error(let error):
                     SyncEnginLogHandler.log(tag: .PushTags, msg: "error =======> registerLocalDatabase =========>\(error)")
